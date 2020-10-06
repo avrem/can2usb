@@ -1,12 +1,12 @@
 /**
   ******************************************************************************
   * @file           : usbd_desc.c
-  * @date           : 30/12/2019 15:16:18  
+  * @date           : 06/10/2020 15:06:21  
   * @version        : v1.0_Cube
   * @brief          : This file implements the USB Device descriptors
   ******************************************************************************
   *
-  * COPYRIGHT(c) 2019 STMicroelectronics
+  * COPYRIGHT(c) 2020 STMicroelectronics
   *
   * Redistribution and use in source and binary forms, with or without modification,
   * are permitted provided that the following conditions are met:

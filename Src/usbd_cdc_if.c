@@ -6,7 +6,7 @@
   * @date           : 19-March-2012
   * @brief          :
   ******************************************************************************
-  * COPYRIGHT(c) 2019 STMicroelectronics
+  * COPYRIGHT(c) 2020 STMicroelectronics
   *
   * Redistribution and use in source and binary forms, with or without modification,
   * are permitted provided that the following conditions are met:
@@ -331,6 +331,7 @@ static int8_t CDC_Receive_FS (uint8_t* Buf, uint32_t *Len)
 				 hcan2.pTxMsg->StdId = hexascii_to_halfbyte(Buf[i++]) ;
 				 hcan2.pTxMsg->StdId = (hcan2.pTxMsg->StdId << 4) + hexascii_to_halfbyte(Buf[i++]) ;
 				 hcan2.pTxMsg->StdId = (hcan2.pTxMsg->StdId << 4) + hexascii_to_halfbyte(Buf[i++]) ;
+				 hcan2.pTxMsg->IDE = CAN_ID_STD;
 				 hcan2.pTxMsg->DLC = hexascii_to_halfbyte(Buf[i++]) ;
 		     tmp_byte = hexascii_to_halfbyte(Buf[i++]) ; tmp_byte = (tmp_byte << 4) + hexascii_to_halfbyte(Buf[i++]) ;
 				 hcan2.pTxMsg->Data[0] = tmp_byte ;
@@ -353,6 +354,56 @@ static int8_t CDC_Receive_FS (uint8_t* Buf, uint32_t *Len)
 		     num_bytes = sprintf((char*)UserTxBufferFS,"\r");
 		break ;
 		
+        case 'T':
+             i = 1 ;
+
+             hcan2.pTxMsg->ExtId = hexascii_to_halfbyte(Buf[i++]) ;
+             hcan2.pTxMsg->ExtId = (hcan2.pTxMsg->ExtId << 4) + hexascii_to_halfbyte(Buf[i++]);
+             hcan2.pTxMsg->ExtId = (hcan2.pTxMsg->ExtId << 4) + hexascii_to_halfbyte(Buf[i++]);
+             hcan2.pTxMsg->ExtId = (hcan2.pTxMsg->ExtId << 4) + hexascii_to_halfbyte(Buf[i++]);
+             hcan2.pTxMsg->ExtId = (hcan2.pTxMsg->ExtId << 4) + hexascii_to_halfbyte(Buf[i++]);
+             hcan2.pTxMsg->ExtId = (hcan2.pTxMsg->ExtId << 4) + hexascii_to_halfbyte(Buf[i++]);
+             hcan2.pTxMsg->ExtId = (hcan2.pTxMsg->ExtId << 4) + hexascii_to_halfbyte(Buf[i++]);
+             hcan2.pTxMsg->ExtId = (hcan2.pTxMsg->ExtId << 4) + hexascii_to_halfbyte(Buf[i++]);
+
+/*             hcan2.pTxMsg->ExtId = 0;
+             hcan2.pTxMsg->ExtId |= hexascii_to_halfbyte(Buf[i++]) << 28;
+             hcan2.pTxMsg->ExtId |= hexascii_to_halfbyte(Buf[i++]) << 24;
+             hcan2.pTxMsg->ExtId |= hexascii_to_halfbyte(Buf[i++]) << 20;
+             hcan2.pTxMsg->ExtId |= hexascii_to_halfbyte(Buf[i++]) << 16;
+             hcan2.pTxMsg->ExtId |= hexascii_to_halfbyte(Buf[i++]) << 12;
+             hcan2.pTxMsg->ExtId |= hexascii_to_halfbyte(Buf[i++]) << 8;
+             hcan2.pTxMsg->ExtId |= hexascii_to_halfbyte(Buf[i++]) << 4;
+             hcan2.pTxMsg->ExtId |= hexascii_to_halfbyte(Buf[i++]);*/
+
+             hcan2.pTxMsg->IDE = CAN_ID_EXT;
+
+/*                 hcan2.pTxMsg->StdId = hexascii_to_halfbyte(Buf[i++]) ;
+                 hcan2.pTxMsg->StdId = (hcan2.pTxMsg->StdId << 4) + hexascii_to_halfbyte(Buf[i++]) ;
+                 hcan2.pTxMsg->StdId = (hcan2.pTxMsg->StdId << 4) + hexascii_to_halfbyte(Buf[i++]) ;*/
+
+             hcan2.pTxMsg->DLC = hexascii_to_halfbyte(Buf[i++]) ;
+             tmp_byte = hexascii_to_halfbyte(Buf[i++]) ; tmp_byte = (tmp_byte << 4) + hexascii_to_halfbyte(Buf[i++]) ;
+                 hcan2.pTxMsg->Data[0] = tmp_byte ;
+             tmp_byte = hexascii_to_halfbyte(Buf[i++]) ; tmp_byte = (tmp_byte << 4) + hexascii_to_halfbyte(Buf[i++]) ;
+                 hcan2.pTxMsg->Data[1] = tmp_byte ;
+             tmp_byte = hexascii_to_halfbyte(Buf[i++]) ; tmp_byte = (tmp_byte << 4) + hexascii_to_halfbyte(Buf[i++]) ;
+                 hcan2.pTxMsg->Data[2] = tmp_byte ;
+             tmp_byte = hexascii_to_halfbyte(Buf[i++]) ; tmp_byte = (tmp_byte << 4) + hexascii_to_halfbyte(Buf[i++]) ;
+                 hcan2.pTxMsg->Data[3] = tmp_byte ;
+             tmp_byte = hexascii_to_halfbyte(Buf[i++]) ; tmp_byte = (tmp_byte << 4) + hexascii_to_halfbyte(Buf[i++]) ;
+                 hcan2.pTxMsg->Data[4] = tmp_byte ;
+             tmp_byte = hexascii_to_halfbyte(Buf[i++]) ; tmp_byte = (tmp_byte << 4) + hexascii_to_halfbyte(Buf[i++]) ;
+                 hcan2.pTxMsg->Data[5] = tmp_byte ;
+             tmp_byte = hexascii_to_halfbyte(Buf[i++]) ; tmp_byte = (tmp_byte << 4) + hexascii_to_halfbyte(Buf[i++]) ;
+                 hcan2.pTxMsg->Data[6] = tmp_byte ;
+             tmp_byte = hexascii_to_halfbyte(Buf[i++]) ; tmp_byte = (tmp_byte << 4) + hexascii_to_halfbyte(Buf[i++]) ;
+                 hcan2.pTxMsg->Data[7] = tmp_byte ;
+                 HAL_CAN_Transmit(&hcan2, 10);
+
+             num_bytes = sprintf((char*)UserTxBufferFS,"\r");
+        break ;
+
 		default :
 		    num_bytes = sprintf((char*)UserTxBufferFS,"\r");
 		break ;

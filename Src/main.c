@@ -1,11 +1,11 @@
 /**
   ******************************************************************************
   * File Name          : main.c
-  * Date               : 30/12/2019 15:16:18
+  * Date               : 06/10/2020 15:06:22
   * Description        : Main program body
   ******************************************************************************
   *
-  * COPYRIGHT(c) 2019 STMicroelectronics
+  * COPYRIGHT(c) 2020 STMicroelectronics
   *
   * Redistribution and use in source and binary forms, with or without modification,
   * are permitted provided that the following conditions are met:
@@ -47,8 +47,8 @@ CAN_HandleTypeDef hcan2;
 TIM_HandleTypeDef htim1;
 
 /* USER CODE BEGIN PV */
-static CanTxMsgTypeDef        can1TxMessage;
-static CanRxMsgTypeDef        can1RxMessage;
+static CanTxMsgTypeDef        can2TxMessage;
+static CanRxMsgTypeDef        can2RxMessage;
 
 uint8_t interface_state = 0 ;
 /* USER CODE END PV */
@@ -75,10 +75,10 @@ uint8_t halfbyte_to_hexascii(uint8_t _halfbyte)
 
 uint8_t hexascii_to_halfbyte(uint8_t _ascii)
 {
- if((_ascii >= '0') && (_ascii <= '9')) return(_ascii - '0') ; 
- if((_ascii >= 'a') && (_ascii <= 'f')) return(_ascii - 'a') ; 
- if((_ascii >= 'A') && (_ascii <= 'F')) return(_ascii - 'A') ; 
- return(0xFF)	;
+ if (_ascii >= '0' && _ascii <= '9') return _ascii - '0';
+ if (_ascii >= 'a' && _ascii <= 'f') return _ascii - 'a' + 10;
+ if (_ascii >= 'A' && _ascii <= 'F') return _ascii - 'A' + 10;
+ return 0xFF;
 }
 
 void HAL_CAN_RxCpltCallback(CAN_HandleTypeDef* CanHandle)
@@ -103,12 +103,31 @@ void HAL_CAN_RxCpltCallback(CAN_HandleTypeDef* CanHandle)
 																	time
 																	);
 */
-  num_bytes = 0 ;
-	buf[num_bytes++] = 't' ;
-	buf[num_bytes++] = halfbyte_to_hexascii((CanHandle->pRxMsg->StdId)>>8);
-	buf[num_bytes++] = halfbyte_to_hexascii((CanHandle->pRxMsg->StdId)>>4);
-	buf[num_bytes++] = halfbyte_to_hexascii((CanHandle->pRxMsg->StdId));
+
+	 // <type> <id> <dlc> <data> [timestamp msec] [flags]
+    num_bytes = 0;
+    if (CanHandle->pRxMsg->IDE == CAN_ID_STD) {
+        buf[num_bytes++] = 't';
+        buf[num_bytes++] = halfbyte_to_hexascii((CanHandle->pRxMsg->StdId)>>8);
+        buf[num_bytes++] = halfbyte_to_hexascii((CanHandle->pRxMsg->StdId)>>4);
+        buf[num_bytes++] = halfbyte_to_hexascii((CanHandle->pRxMsg->StdId));
+    }
+    else {
+        buf[num_bytes++] = 'T';
+//        for (int i = 0; i < 8; i++)
+//            buf[num_bytes++] = halfbyte_to_hexascii(CanHandle->pRxMsg->ExtId >> ((7 - i) * 4));
+        buf[num_bytes++] = halfbyte_to_hexascii((CanHandle->pRxMsg->ExtId)>>28);
+        buf[num_bytes++] = halfbyte_to_hexascii((CanHandle->pRxMsg->ExtId)>>24);
+        buf[num_bytes++] = halfbyte_to_hexascii((CanHandle->pRxMsg->ExtId)>>20);
+        buf[num_bytes++] = halfbyte_to_hexascii((CanHandle->pRxMsg->ExtId)>>16);
+        buf[num_bytes++] = halfbyte_to_hexascii((CanHandle->pRxMsg->ExtId)>>12);
+        buf[num_bytes++] = halfbyte_to_hexascii((CanHandle->pRxMsg->ExtId)>>8);
+        buf[num_bytes++] = halfbyte_to_hexascii((CanHandle->pRxMsg->ExtId)>>4);
+        buf[num_bytes++] = halfbyte_to_hexascii((CanHandle->pRxMsg->ExtId));
+    }
+
 	buf[num_bytes++] = halfbyte_to_hexascii((CanHandle->pRxMsg->DLC));
+
 	buf[num_bytes++] = halfbyte_to_hexascii((CanHandle->pRxMsg->Data[0])>>4);
 	buf[num_bytes++] = halfbyte_to_hexascii((CanHandle->pRxMsg->Data[0]));
 	buf[num_bytes++] = halfbyte_to_hexascii((CanHandle->pRxMsg->Data[1])>>4);
@@ -125,15 +144,17 @@ void HAL_CAN_RxCpltCallback(CAN_HandleTypeDef* CanHandle)
 	buf[num_bytes++] = halfbyte_to_hexascii((CanHandle->pRxMsg->Data[6]));
 	buf[num_bytes++] = halfbyte_to_hexascii((CanHandle->pRxMsg->Data[7])>>4);
 	buf[num_bytes++] = halfbyte_to_hexascii((CanHandle->pRxMsg->Data[7]));
+
 	buf[num_bytes++] = halfbyte_to_hexascii((time)>>12);
 	buf[num_bytes++] = halfbyte_to_hexascii((time)>>8);
 	buf[num_bytes++] = halfbyte_to_hexascii((time)>>4);
 	buf[num_bytes++] = halfbyte_to_hexascii((time)>>0);
 	buf[num_bytes++] = '\r';
 	
-	if(interface_state == 1) CDC_add_buf_to_transmit(buf,num_bytes);
+	if (interface_state == 1)
+	    CDC_add_buf_to_transmit(buf,num_bytes);
 	
-  HAL_CAN_Receive_IT(&hcan2, CAN_FIFO0);
+	HAL_CAN_Receive_IT(&hcan2, CAN_FIFO0);
 }
 
 /* USER CODE END 0 */
@@ -162,13 +183,13 @@ int main(void)
   MX_CAN2_Init();
 
   /* USER CODE BEGIN 2 */
-	HAL_TIM_Base_Start(&htim1);
+  HAL_TIM_Base_Start(&htim1);
 	
-  hcan2.pTxMsg = &can1TxMessage;
-  hcan2.pRxMsg = &can1RxMessage;
+  hcan2.pTxMsg = &can2TxMessage;
+  hcan2.pRxMsg = &can2RxMessage;
 	
   CAN_FilterConfTypeDef canFilterConfig;
-  canFilterConfig.FilterNumber = 0;
+  canFilterConfig.FilterNumber = 27; // was 0
   canFilterConfig.FilterMode = CAN_FILTERMODE_IDMASK;
   canFilterConfig.FilterScale = CAN_FILTERSCALE_32BIT;
   canFilterConfig.FilterIdHigh = 0x0000;
@@ -177,10 +198,10 @@ int main(void)
   canFilterConfig.FilterMaskIdLow = 0x0000;
   canFilterConfig.FilterFIFOAssignment = 0;
   canFilterConfig.FilterActivation = ENABLE;
-  canFilterConfig.BankNumber = 1;
-	HAL_CAN_ConfigFilter(&hcan2, &canFilterConfig);
+  canFilterConfig.BankNumber = 0; // was 1
+  HAL_CAN_ConfigFilter(&hcan1, &canFilterConfig); // config CAN1!
 	
-  HAL_CAN_Receive_IT(&hcan2, CAN_FIFO0) ;
+  HAL_CAN_Receive_IT(&hcan2, CAN_FIFO0);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -237,7 +258,7 @@ void MX_CAN1_Init(void)
 {
 
   hcan1.Instance = CAN1;
-  hcan1.Init.Prescaler = 6;
+  hcan1.Init.Prescaler = 3;
   hcan1.Init.Mode = CAN_MODE_NORMAL;
   hcan1.Init.SJW = CAN_SJW_1TQ;
   hcan1.Init.BS1 = CAN_BS1_6TQ;
@@ -257,7 +278,7 @@ void MX_CAN2_Init(void)
 {
 
   hcan2.Instance = CAN2;
-  hcan2.Init.Prescaler = 6;
+  hcan2.Init.Prescaler = 3;
   hcan2.Init.Mode = CAN_MODE_NORMAL;
   hcan2.Init.SJW = CAN_SJW_1TQ;
   hcan2.Init.BS1 = CAN_BS1_6TQ;
